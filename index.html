@@ -82,9 +82,26 @@
     📷 Activar cámara
   </button>
 
-  <div id="reader"></div>
+<div id="reader"></div>
 
-  <div id="resultado"></div>
+<hr>
+
+<p><strong>¿No se puede leer el QR?</strong></p>
+
+<input
+  id="codigoManual"
+  type="text"
+  placeholder="Ej: PR-001"
+  style="padding:12px; width:80%; font-size:16px; border-radius:10px; border:1px solid #ccc;"
+>
+
+<br>
+
+<button type="button" onclick="validarManual()">
+  ⌨️ Validar código
+</button>
+
+<div id="resultado"></div>
 
 </div>
 
@@ -152,7 +169,22 @@ function validarCodigo(codigo) {
 
 
   window[callback] = function(respuesta) {
+function validarManual() {
+  const campo = document.getElementById("codigoManual");
+  const codigo = campo.value.trim().toUpperCase();
 
+  if (!codigo) {
+    mostrarResultado("⚠️ Escribe un código de entrada.", false);
+    return;
+  }
+
+  if (procesando) return;
+
+  procesando = true;
+  validarCodigo(codigo);
+  campo.value = "";
+}
+    
     mostrarResultado(
       respuesta.mensaje,
       respuesta.tipo === "VALIDA"
