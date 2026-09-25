@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Piedra Romel — Escáner</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .box {
+      max-width: 520px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    h2 {
+      margin-top: 5px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 420px;
+      margin: 20px auto;
+    }
+
+    button {
+      padding: 14px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      cursor: pointer;
+    }
+
+    #resultado {
+      display: none;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .ok {
+      background: #d9f7df;
+    }
+
+    .error {
+      background: #ffdede;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+
+  <h1>🎟️ Piedra Romel</h1>
+
+  <h2>Control de acceso</h2>
+
+  <p>Escanea el QR de la entrada.</p>
+
+  <button type="button" onclick="iniciarCamara()">
+    📷 Activar cámara
+  </button>
+
+  <div id="reader"></div>
+
+  <div id="resultado"></div>
+
+</div>
+
+
+<script>
+
+const APPS_SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbxIBjzswleSmPiEKCuAwNSVsgEhNr4KgrRTpSvDOala7xtCosFdbILLb9NJo37AXc4n/exec";
+
+
+let scanner = null;
+let procesando = false;
+
+
+function iniciarCamara() {
+
+  scanner = new Html5Qrcode("reader");
+
+  scanner.start(
+
+    { facingMode: "environment" },
+
+    {
+      fps: 10,
+      qrbox: {
+        width: 250,
+        height: 250
+      }
+    },
+
+    function(codigo) {
+
+      if (procesando) return;
+
+      procesando = true;
+
+      validarCodigo(codigo);
+
+    },
+
+    function(error) {
+
+      // Ignorar errores normales
+      // mientras busca el QR
+
+    }
+
+  ).catch(function(error) {
+
+    mostrarResultado(
+      "❌ No se pudo abrir la cámara.<br><br>" +
+      "Revisa los permisos de cámara.",
+      false
+    );
+
+  });
+
+}
+
+
+function validarCodigo(codigo) {
+
+  const callback =
+    "callback_" + Date.now();
+
+
+  window[callback] = function(respuesta) {
+
+    mostrarResultado(
+      respuesta.mensaje,
+      respuesta.tipo === "VALIDA"
+    );
+
+
+    delete window[callback];
+
+
+    setTimeout(function() {
+
+      procesando = false;
+
+    }, 2500);
+
+  };
+
+
+  const script =
+    document.createElement("script");
+
+
+  script.src =
+    APPS_SCRIPT_URL +
+    "?accion=validar" +
+    "&codigo=" +
+    encodeURIComponent(codigo) +
+    "&callback=" +
+    callback;
+
+
+  script.onerror = function() {
+
+    mostrarResultado(
+      "❌ No se pudo conectar con Piedra Romel.",
+      false
+    );
+
+
+    delete window[callback];
+
+    procesando = false;
+
+  };
+
+
+  document.body.appendChild(script);
+
+}
+
+
+function mostrarResultado(texto, correcto) {
+
+  const caja =
+    document.getElementById("resultado");
+
+
+  caja.style.display = "block";
+
+
+  caja.className =
+    correcto ? "ok" : "error";
+
+
+  caja.innerHTML = texto;
+
+}
+
+</script>
+
+</body>
+</html>
